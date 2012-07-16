@@ -4,15 +4,11 @@ from django.conf.urls import patterns, include, url
 # from django.contrib import admin
 # admin.autodiscover()
 
-urlpatterns = patterns('fourstore.views',
+urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'mads_editor.views.home', name='home'),
     # url(r'^mads_editor/', include('mads_editor.foo.urls')),
 
-    # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    # Uncomment the next line to enable the admin:
-    # url(r'^admin/', include(admin.site.urls)),
-    url(r"^sparql/$", "sparql_proxy", {"sparql_endpoint": "http://www.dbpedia.org/sparql/"}),
+    url(r"^$", 'mads_editor.search.search'),
+    url(r"^(.*)", 'mads_editor.resource.resource'),
 )

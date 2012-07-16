@@ -1,8 +1,10 @@
 # Django settings for mads_editor project.
+import os
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
+SETTINGS_PATH = os.getcwd()
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
@@ -93,7 +95,7 @@ TEMPLATE_LOADERS = (
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+#    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
@@ -109,6 +111,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+    os.path.join(SETTINGS_PATH, 'tpl'),
 )
 
 INSTALLED_APPS = (
@@ -118,8 +121,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'fourstore',
-    'mads_app'
+    'mads_app',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -155,6 +157,4 @@ LOGGING = {
     }
 }
 
-FOURSTORE_KBNAME = "mads"  # Name of 4store knowledge base
-FOURSTORE_PORT = 6667      # Port for 4store HTTP server
-SPARQL_ENDPOINT = "http://localhost:6667/sparql/"
+ENDPOINT = "http://localhost:8080/sparql/"
