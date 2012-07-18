@@ -12,7 +12,7 @@
     <table>
       {% for hit, desc in hits.items %}
         <tr>
-	  <td>{{ hit }}</td>
+	  <td><a href="/{{ hit }}"> {{ hit }}</a></td>
 	  <td>{{ desc }}</td>
 	</tr>
       {% endfor %}
@@ -20,7 +20,7 @@
     <table>
       {% for hit, desc in rhits.items %}
         <tr>
-	  <td>{{ hit }}</td>
+	  <td><a href="/{{ hit }}">{{ hit }}</a></td>
 	  <td>{{ desc }}</td>
 	</tr>
       {% endfor %}

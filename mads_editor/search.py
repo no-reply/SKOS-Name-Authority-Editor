@@ -38,14 +38,16 @@ def search(request, ref=None):
                 except:
                     uri = person['regexhit']['value']
                     level = 'regex'
-                suri = str(uri)
-                query = 'DESCRIBE <' + suri + '>'
+                uristr = str(uri)
+                query = 'DESCRIBE <' + uristr + '>'
                 endpoint.setQuery(query)
                 desc = endpoint.query().convert()
+                suri = uristr.split('/')[-1]
                 if level == 'hit':
                     hits[suri] = desc[uri][u'http://www.w3.org/2004/02/skos/core#label'][0][u'value']
                 elif not suri in hits:
                     rhits[suri] = desc[uri][u'http://www.w3.org/2004/02/skos/core#label'][0][u'value']
+            
     return render_to_response("search.tpl", {'form':search_form, 'hits': hits, 'rhits': rhits})
 
 class SearchForm(Form):
