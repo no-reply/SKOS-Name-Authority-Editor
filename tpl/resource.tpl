@@ -27,10 +27,8 @@
       {% endfor %}
     </table>
 
-    <form action="/" method="post" > {% csrf_token %}
-      {{form.as_p}}
-    </form>
     <form method="post" action="/" id="variantsForm">
+     {{form.as_p}}
       <table>
 	<tbody>
 	  {% for var in variants.forms %}
@@ -40,6 +38,7 @@
 	  {% endfor %}
 	</table>
 	{{ variants.management_form }}
+	<input type="submit" value="Save" />
     </form>
   </body>
 </html>
