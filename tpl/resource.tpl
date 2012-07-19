@@ -27,7 +27,7 @@
       {% endfor %}
     </table>
 
-    <form method="post" action="/" id="variantsForm">
+    <form method="post" action="/submit" id="resourceForm">
      {{form.as_p}}
       <table>
 	<tbody>

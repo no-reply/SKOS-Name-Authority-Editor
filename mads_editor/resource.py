@@ -26,6 +26,9 @@ def resource(request, ref=None):
 
     return render_to_response("resource.tpl", {'uri': str(uri), 'short': uri.split('/')[-1], 'res': r, 'form': forms['form'], 'variants': forms['variants']})
 
+def saveResource(request, ref=None):
+    pass
+
 def buildForm(resource):
     fields = {'name': resource['http://www.w3.org/2004/02/skos/core#label'][0]['value']}
     altLabel = 'http://www.w3.org/2004/02/skos/core#altLabel' 
@@ -51,5 +54,4 @@ class BaseVariantFormSet(BaseFormSet):
     def add_fields(self, form, index):
         super(BaseVariantFormSet, self).add_fields(form, index)
         form.fields["variant"] = CharField()
-
 
