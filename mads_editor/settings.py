@@ -72,6 +72,7 @@ STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+    os.path.join(SETTINGS_PATH, 'static'),
 )
 
 # List of finder classes that know how to find static files in
@@ -83,7 +84,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '1_6ujb42=4xq*ni2r#a9j91&amp;p)si$t6ho!2$!rlih14e3jcwto'
+#SECRET_KEY = '1_6ujb42=4xq*ni2r#a9j91&amp;p)si$t6ho!2$!rlih14e3jcwto'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
