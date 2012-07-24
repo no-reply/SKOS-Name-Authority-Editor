@@ -10,6 +10,7 @@ from rdflib import URIRef
 from rdflib import Namespace
 from rdflib import Literal
 from namespaces import Ns
+import pynoid
 
 namespaces = Ns.namespaces
 ns = namespaces
@@ -53,6 +54,21 @@ def resource(request, ref=None):
         return HttpResponse("resource not found", status=404) #TODO: return a useful error
 
     return render_to_response("resource.tpl", {'uri': str(uri), 'short': uri.split('/')[-1], 'res': r, 'form': forms['form'], 'variants': forms['variants'], 'saved': saved})
+
+def new(request, ref=None):
+    test = {'boolean': True}
+    while test['boolean'] == True:
+        # assign an identifier
+        identifier = pynoid.mint('zeek', random.randint(0, 100000))
+        uri = Namespace("http://data.library.oregonstate.edu/person/")[identifer]
+        endpoint = SPARQLWrapper(settings.ENDPOINT)
+        endpoint.setReturnFormat(JSON)
+        # check if an item aleady has this identifier
+        query = "ASK { <%s> ?p ?o . }" % uri
+        endpoint.setQuery(query)
+        test = endpoint.query().convert()
+    
+    return HttpResponse(identifier, status=404) #TODO: return a useful error
 
 def confirm(request, ref=None):
     #TODO: add confirmation step to form submit
