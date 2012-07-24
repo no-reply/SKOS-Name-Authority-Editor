@@ -10,3 +10,4 @@ class QueryManager:
     def __init__(self, endpoint=settings.ENDPOINT, format=JSON):
         self.endpoint = SPARQLWrapper(endpoint)
         
+        

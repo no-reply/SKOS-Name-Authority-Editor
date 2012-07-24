@@ -23,10 +23,12 @@ def search(request, ref=None):
             {{?hit <http://xmlns.com/foaf/0.1/lastname> '%(s)s' .} UNION 
              {?hit <http://xmlns.com/foaf/0.1/firstname> '%(s)s' .} UNION 
              {?hit <http://xmlns.com/foaf/0.1/name> '%(s)s' .} UNION 
-             {?regexhit <http://www.w3.org/2004/02/skos/core#label> ?name FILTER regex(?name, '%(s)s', "i")} UNION 
+             {?regexhit <http://www.w3.org/2004/02/skos/core#prefLabel> ?name FILTER regex(?name, '%(s)s', "i")} UNION 
              {?regexhit <http://www.w3.org/2004/02/skos/core#altLabel> ?name FILTER regex(?name, '%(s)s', "i")} UNION 
-             {?hit <http://www.w3.org/2004/02/skos/core#label> '%(s)s' .} UNION
-             {?hit <http://www.w3.org/2004/02/skos/core#altLabel> '%(s)s' .}} 
+             {?hit <http://www.w3.org/2004/02/skos/core#prefLabel> '%(s)s' .} UNION
+             {?hit <http://www.w3.org/2004/02/skos/core#altLabel> '%(s)s' .} UNION
+             {?regex <http://www.w3.org/2004/02/skos/core#hiddenLabel> '%(s)s' FILTER regex(?name, '%(s)s', "i")} UNION 
+             {?hit <http://www.w3.org/2004/02/skos/core#hiddenLabel> '%(s)s'  }}
              LIMIT 100""" % {'s': form.cleaned_data['searchText']}
 
             endpoint.setQuery(query)
@@ -43,10 +45,13 @@ def search(request, ref=None):
                 endpoint.setQuery(query)
                 desc = endpoint.query().convert()
                 suri = uristr.split('/')[-1]
-                if level == 'hit':
-                    hits[suri] = desc[uri][u'http://www.w3.org/2004/02/skos/core#label'][0][u'value']
-                elif not suri in hits:
-                    rhits[suri] = desc[uri][u'http://www.w3.org/2004/02/skos/core#label'][0][u'value']
+                try:
+                    if level == 'hit':
+                        hits[suri] = desc[uri][u'http://www.w3.org/2004/02/skos/core#prefLabel'][0][u'value']
+                    elif not suri in hits:
+                        rhits[suri] = desc[uri][u'http://www.w3.org/2004/02/skos/core#prefLabel'][0][u'value']
+                except:
+                    pass
             
     return render_to_response("search.tpl", {'form':search_form, 'hits': hits, 'rhits': rhits})
 

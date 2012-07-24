@@ -1,5 +1,6 @@
 # Django settings for mads_editor project.
 import os
+from rdflib import Namespace
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -158,3 +159,7 @@ LOGGING = {
 }
 
 ENDPOINT = "http://localhost:8080/sparql/"
+UPDATE = "http://localhost:8080/update/"
+
+PERSON_NS = "http://data.library.oregonstate.edu/person/"
+MADS_AUTH_NS = "http://data.library.oregonstate.edu/authorities/"
