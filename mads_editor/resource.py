@@ -5,32 +5,30 @@ from django.forms import Form, CharField, BooleanField
 from django.forms.formsets import formset_factory, BaseFormSet
 from SPARQLWrapper import SPARQLWrapper, JSON, N3
 import urllib2
+import pynoid
+import random
 from query import QueryManager
 from rdflib import URIRef
 from rdflib import Namespace
 from rdflib import Literal
 from namespaces import Ns
-import pynoid
 
 namespaces = Ns.namespaces
 ns = namespaces
+queryManager = QueryManager()
 
 def resource(request, ref=None):
     saved = False # set saved to false until post is successful
     uri = Namespace("http://data.library.oregonstate.edu/person/")[ref]
-    endpoint = SPARQLWrapper(settings.ENDPOINT)
-    endpoint.setReturnFormat(JSON)
-
-    # check if our item exists
-    query = "ASK { <%s> ?p ?o . }" % uri
-    endpoint.setQuery(query)
-    test = endpoint.query().convert()
+    data = ''
     # deal with updates if this is a form submit
-    if request.method == 'POST' and test['boolean'] == True:
+    if request.method == 'POST':
         # get data to delete
-        query = "DESCRIBE <%s>" % uri
-        endpoint.setQuery(query)
-        r = endpoint.query().convert()[str(uri)]
+        resource = queryManager.describe(uri)
+        try:
+            resource = resource
+        except:
+            resource = {}
         
         # get form data and put it in a dict
         resForm = ResourceForm(request.POST)
@@ -41,41 +39,41 @@ def resource(request, ref=None):
                 'res': resForm.cleaned_data,
                 'var': varForm.cleaned_data
                 }
-            saved = processForm(uri, data, r)
+            saved = processForm(uri, data, resource)
 
     # if the uri exists, try to describe it and build an edit form 
     # retrieving data again if we just processed a form
-    if test['boolean'] == True:
-        query = "DESCRIBE <%s>" % uri
-        endpoint.setQuery(query)
-        r = endpoint.query().convert()[str(uri)]
-        forms = buildForm(r)
-    else:
-        return HttpResponse("resource not found", status=404) #TODO: return a useful error
 
-    return render_to_response("resource.tpl", {'uri': str(uri), 'short': uri.split('/')[-1], 'res': r, 'form': forms['form'], 'variants': forms['variants'], 'saved': saved})
+    resource = queryManager.describe(uri)
+    if resource:
+        forms = buildForm(resource)
+    else:
+        #TODO: return a useful error
+        return HttpResponse("resource not found", status=404) 
+
+    return render_to_response("resource.tpl", {'uri': str(uri), 'short': uri.split('/')[-1], 'res': resource, 'form': forms['form'], 'variants': forms['variants'], 'saved': saved, 'data': data})
 
 def new(request, ref=None):
-    test = {'boolean': True}
-    while test['boolean'] == True:
+    test = True
+    while test == True:
         # assign an identifier
         identifier = pynoid.mint('zeek', random.randint(0, 100000))
-        uri = Namespace("http://data.library.oregonstate.edu/person/")[identifer]
-        endpoint = SPARQLWrapper(settings.ENDPOINT)
-        endpoint.setReturnFormat(JSON)
-        # check if an item aleady has this identifier
-        query = "ASK { <%s> ?p ?o . }" % uri
-        endpoint.setQuery(query)
-        test = endpoint.query().convert()
-    
-    return HttpResponse(identifier, status=404) #TODO: return a useful error
+        uri = Namespace("http://data.library.oregonstate.edu/person/")[identifier]
+        test = queryManager.ask(uri)
+    forms = buildForm()
+       
+    return render_to_response("resource.tpl", {'uri': str(uri), 'short': uri.split('/')[-1], 'res': {}, 'form': forms['form'], 'variants': forms['variants']})
 
 def confirm(request, ref=None):
     #TODO: add confirmation step to form submit
     pass
 
-def buildForm(resource):
-    fields = {'name': resource[str(ns['skos']['prefLabel'])][0]['value']}
+def buildForm(resource={}):
+    fields = {}
+    try:
+        fields = {'name': resource[str(ns['skos']['prefLabel'])][0]['value']}
+    except:
+        pass
     #TODO: find better way to make empty form fields when there is no data
     try:
         fields['firstName'] = resource[str(ns['foaf']['givenName'])][0]['value'] 
@@ -111,16 +109,20 @@ def buildForm(resource):
 
 
 def processForm(uri, data, olddata):
-    # not using SPARQLwrapper because update endpoints don't seem to work
     endpoint = settings.UPDATE
+    # create a dictionary object of term uris and their form data
     #TODO: is there a good way to move all term matching to a single configurable location?
-    terms={}
-    rterms={}
-    terms[ns['foaf']['familyName']] = data['res']['lastName']
-    terms[ns['foaf']['givenName']] = data['res']['firstName']
-    terms[ns['skos']['prefLabel']] = data['res']['name']
-    rterms[ns['skos']['altLabel']] = []
-    rterms[ns['skos']['hiddenLabel']] = []
+    terms={
+        ns['foaf']['familyName']: data['res']['lastName'],
+        ns['foaf']['givenName']: data['res']['firstName'],
+        ns['skos']['prefLabel']: data['res']['name'],
+        }
+    # and another dict for repeatable terms
+    rterms={
+        ns['skos']['altLabel']: [],
+        ns['skos']['hiddenLabel']: [],
+        }
+    # find all alt and hidden labels
     for label in data['var']:
         try:
             if label['isHidden']:
@@ -130,7 +132,7 @@ def processForm(uri, data, olddata):
         except:
             continue
 
-    #TODO: make delete make sense
+    #TODO: make delete make sense. This is a huge mess of trial and error.
     delete = "DELETE DATA {" 
     try:
         for alt in olddata[str(ns['skos']['altLabel'])]:
@@ -163,18 +165,21 @@ def processForm(uri, data, olddata):
 
     # Insert Updated data
     update = 'INSERT DATA {'
+    # loop through dict objects and add a triple for each term
     for term in terms:
-        update += '<' + uri + '> <' + str(term) + '> "' + str(terms[term]) + '" . '
+        if terms[term]:
+            update += '<' + uri + '> <' + str(term) + '> "' + terms[term] + '" . '
     for term in rterms:
-        for t in rterms[term]:
-            update += '<' + uri + '> <' + str(term) + '> "' + str(t)+ '" . '
+        for value in rterms[term]:
+            if value:
+                update += '<' + uri + '> <' + str(term) + '> "' + str(value)+ '" . '
     update += ' }'
 
     #TODO: what happens on failure? If delete succeeds and insert fails? Does DELETE/INSERT fix this.
-    urllib2.urlopen(endpoint, data='update='+delete)
-    urllib2.urlopen(endpoint, data='update='+update)
+    delStatus = queryManager.update(delete)
+    upStatus = queryManager.update(update)
 
-    return True
+    return delStatus and upStatus
 
 
 class ResourceForm(Form):

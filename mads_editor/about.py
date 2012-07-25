@@ -1,4 +1,5 @@
 from django.shortcuts import render_to_response
+from django.http import HttpResponse
 from django.conf import settings
 from django.forms import Form, CharField, BooleanField
 from django.forms.formsets import formset_factory, BaseFormSet
@@ -12,12 +13,14 @@ from namespaces import Ns
 
 namespaces = Ns.namespaces
 ns = namespaces
+queryManager = QueryManager()
 
 def about(request, ref=None):
-    endpoint = SPARQLWrapper(settings.ENDPOINT)
-    endpoint.setReturnFormat(JSON)
-
     # get a person count
-    query = "SELECT ?person WHERE { ?person <%(label)s> ?o ; a <%(person)s> }" % {'label': str(ns['skos']['prefLabel'], 'person': str(ns['foaf']['person']){
-    endpoint.setQuery(query)
-    test = endpoint.query().convert()
+    query = """SELECT ?person (COUNT(?person) as ?pCount) WHERE { 
+        ?person <%(label)s> ?o .
+        }""" % {'label': str(ns['skos']['prefLabel']), 'person': str(ns['foaf']['person'])}
+    personCount = queryManager.query(query)['results']['bindings'][0]['pCount']['value']
+    return HttpResponse(personCount, status=404) 
+    
+    

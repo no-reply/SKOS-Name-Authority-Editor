@@ -16,23 +16,22 @@ def search(request, ref=None):
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
-            endpoint = SPARQLWrapper(settings.ENDPOINT)
-            endpoint.setReturnFormat(JSON)
+            queryManager = QueryManager()
 
             query = """SELECT ?hit, ?regexhit WHERE 
-            {{?hit <http://xmlns.com/foaf/0.1/lastname> '%(s)s' .} UNION 
-             {?hit <http://xmlns.com/foaf/0.1/firstname> '%(s)s' .} UNION 
+            {{?hit <http://xmlns.com/foaf/0.1/familyName> '%(s)s' .} UNION 
+             {?hit <http://xmlns.com/foaf/0.1/givenName> '%(s)s' .} UNION 
              {?hit <http://xmlns.com/foaf/0.1/name> '%(s)s' .} UNION 
              {?regexhit <http://www.w3.org/2004/02/skos/core#prefLabel> ?name FILTER regex(?name, '%(s)s', "i")} UNION 
              {?regexhit <http://www.w3.org/2004/02/skos/core#altLabel> ?name FILTER regex(?name, '%(s)s', "i")} UNION 
              {?hit <http://www.w3.org/2004/02/skos/core#prefLabel> '%(s)s' .} UNION
              {?hit <http://www.w3.org/2004/02/skos/core#altLabel> '%(s)s' .} UNION
-             {?regex <http://www.w3.org/2004/02/skos/core#hiddenLabel> '%(s)s' FILTER regex(?name, '%(s)s', "i")} UNION 
+             {?regexhit <http://www.w3.org/2004/02/skos/core#hiddenLabel> ?name FILTER regex(?name, '%(s)s', "i")} UNION 
              {?hit <http://www.w3.org/2004/02/skos/core#hiddenLabel> '%(s)s'  }}
              LIMIT 100""" % {'s': form.cleaned_data['searchText']}
 
-            endpoint.setQuery(query)
-            r = endpoint.query().convert()
+            r = queryManager.query(query)
+
             for person in r['results']['bindings']:
                 level = 'hit'
                 try:
@@ -41,15 +40,14 @@ def search(request, ref=None):
                     uri = person['regexhit']['value']
                     level = 'regex'
                 uristr = str(uri)
-                query = 'DESCRIBE <' + uristr + '>'
-                endpoint.setQuery(query)
-                desc = endpoint.query().convert()
+
+                desc = queryManager.describe(uristr)
                 suri = uristr.split('/')[-1]
                 try:
                     if level == 'hit':
-                        hits[suri] = desc[uri][u'http://www.w3.org/2004/02/skos/core#prefLabel'][0][u'value']
+                        hits[suri] = desc[u'http://www.w3.org/2004/02/skos/core#prefLabel'][0][u'value']
                     elif not suri in hits:
-                        rhits[suri] = desc[uri][u'http://www.w3.org/2004/02/skos/core#prefLabel'][0][u'value']
+                        rhits[suri] = desc[u'http://www.w3.org/2004/02/skos/core#prefLabel'][0][u'value']
                 except:
                     pass
             

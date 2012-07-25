@@ -93,6 +93,7 @@
     </style>
   </head>
   <body>
+    {{ data }}
     {% if saved %}
     <div id="savedFlag"><p>Saved!</p></div>
     {% endif %}
@@ -124,7 +125,7 @@
 	<a href='/{{short}}'>cancel</a>
       </div>
     </form>
-
+    {% if res %}
     <button id="descToggle">Full Description</button>
     <div id="descFull" style="">
       <table>
@@ -136,6 +137,6 @@
 	{% endfor %}
       </table>
     </div>
-
+    {% endif %}
   </body>
 </html>

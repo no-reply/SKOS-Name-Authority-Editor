@@ -160,6 +160,7 @@ LOGGING = {
 
 ENDPOINT = "http://localhost:8080/sparql/"
 UPDATE = "http://localhost:8080/update/"
+GRAPH = "http://data.library.oregonstate.edu/G"
 
 PERSON_NS = "http://data.library.oregonstate.edu/person/"
 MADS_AUTH_NS = "http://data.library.oregonstate.edu/authorities/"

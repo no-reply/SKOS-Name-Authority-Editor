@@ -83,6 +83,7 @@
     <div id="searchResults">
       {% if hits.items %}
       <table id="prefNames">
+	<thead><tr><td><strong>Name Element Matches</strong></td></tr></thead>
 	{% for hit, desc in hits.items %}
         <tr>
 	  <td><a href="/{{ hit }}"> {{ hit }}</a></td>
@@ -93,6 +94,7 @@
       {% endif %}
       {% if rhits.items %}
       <table id="varNames">
+	<thead><tr><td><strong>Partial Matches</strong></td></tr></thead>
 	{% for hit, desc in rhits.items %}
         <tr>
 	  <td><a href="/{{ hit }}">{{ hit }}</a></td>

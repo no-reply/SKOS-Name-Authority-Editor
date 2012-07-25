@@ -1,2 +1,16 @@
-easy_install rdf
-easy_install SPARQLWrapper
+
+
+License
+=====================
+
+Licensed under the `GNU Affero GPL v3`_
+
+.. _GNU Affero GPL v3: http://www.gnu.org/licenses/agpl.html
+
+Installation
+============
+
+    easy_install rdf
+    easy_install SPARQLWrapper
+    easy_install pynoid
+    python ./manage.py runserver 0.0.0.0

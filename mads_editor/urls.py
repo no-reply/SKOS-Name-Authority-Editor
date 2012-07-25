@@ -11,6 +11,7 @@ urlpatterns = patterns('',
 
     url(r"^$", 'mads_editor.search.search'),
     url(r"^new$", 'mads_editor.resource.new'),
+    url(r"^about$", 'mads_editor.about.about'),
     url(r"^([a-zA-Z0-9_]+)/$", 'mads_editor.resource.resource'),
     url(r"^([a-zA-Z0-9_]+)$", 'mads_editor.resource.resource'),
 
