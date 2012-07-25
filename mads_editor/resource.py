@@ -68,6 +68,11 @@ def confirm(request, ref=None):
     #TODO: add confirmation step to form submit
     pass
 
+def merge(request, uriMerge=None, uriTarget=None):
+    uriMerge = Namespace("http://data.library.oregonstate.edu/person/")[uriMerge]
+    uriTarget = Namespace("http://data.library.oregonstate.edu/person/")[uriTarget]
+    return HttpResponse(str(uriMerge) + '\n' + str(uriTarget), status=404) 
+
 def buildForm(resource={}):
     fields = {}
     try:
