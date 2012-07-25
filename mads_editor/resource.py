@@ -71,7 +71,38 @@ def confirm(request, ref=None):
 def merge(request, uriMerge=None, uriTarget=None):
     uriMerge = Namespace("http://data.library.oregonstate.edu/person/")[uriMerge]
     uriTarget = Namespace("http://data.library.oregonstate.edu/person/")[uriTarget]
-    return HttpResponse(str(uriMerge) + '\n' + str(uriTarget), status=404) 
+    merge = queryManager.describe(uriMerge)
+    target = queryManager.describe(uriTarget)
+
+    if request.method == 'POST':
+        sameAs = "INSERT DATA {<" + uriMerge + "> owl:sameAs <" + uriTarget + "> .}"
+        queryManager.update(sameAs)
+        # get form data and put it in a dict
+        resForm = ResourceForm(request.POST)
+        VariantFormSet = formset_factory(VariantForm)
+        varForm = VariantFormSet(request.POST)
+        if resForm.is_valid() and varForm.is_valid():
+            data = {
+                'res': resForm.cleaned_data,
+                'var': varForm.cleaned_data
+                }
+            saved = processForm(uriTarget, data, resource)
+
+    # these labels will be merged into the target as skos:altLabels
+    mergeLabels = [str(ns['skos']['prefLabel']), str(ns['skos']['altLabel']), str(ns['skos']['hiddenLabel']), str(ns['foaf']['name'])]
+    tmp = False
+    
+    for field in merge:
+        if field in mergeLabels:
+            tmp = True
+            try:
+                target[str(ns['skos']['hiddenLabel'])].append(merge[field][0])
+            except KeyError:
+                target[str(ns['skos']['hiddenLabel'])] = [merge[field]]
+         
+    forms = buildForm(target)
+    data = target
+    return render_to_response("merge.tpl", {'uriMerge': str(uriMerge), 'uri': str(uriTarget), 'mergeShort': uriMerge.split('/')[-1], 'short': uriTarget.split('/')[-1], 'res': {}, 'form': forms['form'], 'variants': forms['variants']})
 
 def buildForm(resource={}):
     fields = {}
