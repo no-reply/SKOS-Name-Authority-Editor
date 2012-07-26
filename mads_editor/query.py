@@ -29,7 +29,7 @@ class QueryManager:
         
     def ask(self, uri):
         q = "ASK { GRAPH <" + self.graph + "> { <" + uri + "> ?p ?o . } }"
-        return self.query(q)
+        return self.query(q)['boolean']
 
     def describe(self, uri):
         if self.ask(uri):
