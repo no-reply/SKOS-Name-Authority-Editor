@@ -26,6 +26,10 @@ class QueryManager:
             return False
         else:
             return True
+
+    def insert(self, query):
+        self.update('INSERT DATA { GRAPH <' + self.graph + '> ' + query + '}')
+
         
     def ask(self, uri):
         q = "ASK { GRAPH <" + self.graph + "> { <" + uri + "> ?p ?o . } }"

@@ -109,7 +109,6 @@ def buildForm(resource={}):
 
 
 def processForm(uri, data, olddata):
-    endpoint = settings.UPDATE
     # create a dictionary object of term uris and their form data
     #TODO: is there a good way to move all term matching to a single configurable location?
     terms={
@@ -164,7 +163,7 @@ def processForm(uri, data, olddata):
     delete += '}'
 
     # Insert Updated data
-    update = 'INSERT DATA {'
+    update =  '{'
     # loop through dict objects and add a triple for each term
     for term in terms:
         if terms[term]:
@@ -177,7 +176,7 @@ def processForm(uri, data, olddata):
 
     #TODO: what happens on failure? If delete succeeds and insert fails? Does DELETE/INSERT fix this.
     delStatus = queryManager.update(delete)
-    upStatus = queryManager.update(update)
+    upStatus = queryManager.insert(update)
 
     return delStatus and upStatus
 
