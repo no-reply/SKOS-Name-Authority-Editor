@@ -57,11 +57,13 @@
     {% if res %}
     <button id="descToggle">Full Description</button>
     <table class="listing">
-      {% for field, value in res.items %}
+      {% for field, values in res.items %}
+      {% for value in values %}
       <tr class='{% cycle "odd" "even" %}'>
 	<td>{{ field }}</td>
-	<td>{{ value.0.value }}</td>
+	<td>{{ value.value }}</td>
       </tr>
+      {% endfor %}
       {% endfor %}
     </table>
 
