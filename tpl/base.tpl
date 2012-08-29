@@ -89,7 +89,7 @@
     </style>
   </head>
   <body>
-    <h1>SKOS/MADS Name Authority Editor</h1>
+    <h1>SKOS/FOAF Name Authority Editor</h1>
 
     {% block content %}{% endblock %}
 
