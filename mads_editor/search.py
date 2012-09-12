@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.forms import Form, CharField
 from django.shortcuts import render_to_response
 from SPARQLWrapper import SPARQLWrapper, JSON, N3
