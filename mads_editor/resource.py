@@ -51,7 +51,7 @@ def resource(request, ref=None):
         #TODO: return a useful error
         return HttpResponse("resource not found", status=404) 
 
-    return render_to_response("resource.tpl", {'uri': str(uri), 'short': uri.split('/')[-1], 'res': resource, 'form': forms['form'], 'variants': forms['variants'], 'saved': saved, 'data': data})
+    return render_to_response("resource.tpl", {'uri': str(uri), 'short': uri.split('/')[-1], 'res': resource, 'form': forms['form'], 'variants': forms['variants'], 'saved': saved, 'data': resource})
 
 def new(request, ref=None):
     test = True
@@ -67,6 +67,44 @@ def new(request, ref=None):
 def confirm(request, ref=None):
     #TODO: add confirmation step to form submit
     pass
+
+def merge(request, uriMerge=None, uriTarget=None):
+    uriMerge = Namespace("http://data.library.oregonstate.edu/person/")[uriMerge]
+    uriTarget = Namespace("http://data.library.oregonstate.edu/person/")[uriTarget]
+    merge = queryManager.describe(uriMerge)
+    target = queryManager.describe(uriTarget)
+
+    if request.method == 'POST':
+        sameAs = "INSERT DATA {<" + uriMerge + "> owl:sameAs <" + uriTarget + "> .}"
+        queryManager.update(sameAs)
+        # get form data and put it in a dict
+        resForm = ResourceForm(request.POST)
+        VariantFormSet = formset_factory(VariantForm)
+        varForm = VariantFormSet(request.POST)
+        if resForm.is_valid() and varForm.is_valid():
+            data = {
+                'res': resForm.cleaned_data,
+                'var': varForm.cleaned_data
+                }
+            saved = processForm(uriTarget, data, resource)
+
+    # these labels will be merged into the target as skos:hiddenLabel
+    #TODO: exclude duplicate names
+    mergeLabels = [str(ns['skos']['prefLabel']), str(ns['skos']['altLabel']), str(ns['skos']['hiddenLabel']), str(ns['foaf']['name'])]
+    for field in merge:
+        if field in mergeLabels:
+            for value in merge[field]:
+                if str(ns['skos']['hiddenLabel']) in target:
+                    target[str(ns['skos']['hiddenLabel'])].append(value)
+                else: 
+                    target[str(ns['skos']['hiddenLabel'])] = merge[field]
+
+    #TODO: mark old record for deletion
+    # do this with a hidden form?
+    
+    forms = buildForm(target)
+    data = target
+    return render_to_response("merge.tpl", {'uriMerge': str(uriMerge), 'uri': str(uriTarget), 'mergeShort': uriMerge.split('/')[-1], 'short': uriTarget.split('/')[-1], 'res': target, 'form': forms['form'], 'variants': forms['variants']})
 
 def buildForm(resource={}):
     fields = {}
@@ -88,17 +126,14 @@ def buildForm(resource={}):
     hiddenLabel = str(ns['skos']['hiddenLabel'])
     initial = []
 
-    if (altLabel in resource) or (hiddenLabel in resource):
-        try:
-            for variant in resource[altLabel]:
+    if (altLabel in resource):
+        for variant in resource[altLabel]:
                 initial.append({'variant':variant['value'], 'isHidden':False})
-        except:
-            pass
-        try:
-            for variant in resource[hiddenLabel]:
-                initial.append({'variant':variant['value'], 'isHidden':True})
-        except:
-            pass
+
+    if (hiddenLabel in resource):
+        for variant in resource[hiddenLabel]:
+            initial.append({'variant':variant['value'], 'isHidden':True})
+
         VariantFormSet = formset_factory(VariantForm, extra=0, formset=BaseVariantFormSet)
     else:
         VariantFormSet = formset_factory(VariantForm, extra=1, formset=BaseVariantFormSet)
