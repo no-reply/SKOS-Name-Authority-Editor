@@ -232,16 +232,4 @@ class BaseVariantFormSet(BaseFormSet):
         super(BaseVariantFormSet, self).add_fields(form, index)
         form.fields["variant"] = CharField()
 
-#class MadsForm(Form):
-#    authoritativeFullName = CharField(required=True)
-#    authoritativeDateName = CharField(required=True)
-
-#class MadsVariantForm(Form):
-#    variant = CharField(required=False)
-#    isHidden = BooleanField(required=False)
-
-#class BaseMadsVariantFormSet(BaseFormSet):
-#    def add_fields(self, form, index):
-#        super(BaseVariantFormSet, self).add_fields(form, index)
-#        form.fields["variant"] = CharField()
 
