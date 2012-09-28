@@ -67,5 +67,4 @@
 
     {% endif %}
 
-    {{ tmp }}
 {% endblock%}
