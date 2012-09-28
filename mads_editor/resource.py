@@ -90,19 +90,19 @@ def merge(request, uriMerge=None, uriTarget=None):
 
     # these labels will be merged into the target as skos:altLabels
     mergeLabels = [str(ns['skos']['prefLabel']), str(ns['skos']['altLabel']), str(ns['skos']['hiddenLabel']), str(ns['foaf']['name'])]
-    tmp = False
-    
+    tmp = {}
     for field in merge:
         if field in mergeLabels:
-            tmp = True
-            try:
-                target[str(ns['skos']['hiddenLabel'])].append(merge[field][0])
-            except KeyError:
-                target[str(ns['skos']['hiddenLabel'])] = [merge[field]]
-         
+            if str(ns['skos']['hiddenLabel']) in target:
+                target[str(ns['skos']['hiddenLabel'])].append(merge[field])
+            else: 
+                target[str(ns['skos']['hiddenLabel'])] = merge[field]
+    #TODO: mark old record for deletion
+    # do this with a hidden form?
+    
     forms = buildForm(target)
     data = target
-    return render_to_response("merge.tpl", {'uriMerge': str(uriMerge), 'uri': str(uriTarget), 'mergeShort': uriMerge.split('/')[-1], 'short': uriTarget.split('/')[-1], 'res': {}, 'form': forms['form'], 'variants': forms['variants']})
+    return render_to_response("merge.tpl", {'uriMerge': str(uriMerge), 'uri': str(uriTarget), 'mergeShort': uriMerge.split('/')[-1], 'short': uriTarget.split('/')[-1], 'res': target, 'form': forms['form'], 'variants': forms['variants'], 'tmp': tmp})
 
 def buildForm(resource={}):
     fields = {}
