@@ -54,12 +54,12 @@ def resource(request, ref=None):
     return render_to_response("resource.tpl", {'uri': str(uri), 'short': uri.split('/')[-1], 'res': resource, 'form': forms['form'], 'variants': forms['variants'], 'saved': saved, 'data': resource})
 
 def new(request, ref=None):
-    test = True
-    while test == True:
+    uriNeeded = True
+    while uriNeeded == True:
         # assign an identifier
         identifier = pynoid.mint('zeek', random.randint(0, 100000))
         uri = Namespace("http://data.library.oregonstate.edu/person/")[identifier]
-        test = queryManager.ask(uri)
+        uriNeeded = queryManager.ask(uri) # if this identifier is already in use, let's get another one
     forms = buildForm()
        
     return render_to_response("resource.tpl", {'uri': str(uri), 'short': uri.split('/')[-1], 'res': {}, 'form': forms['form'], 'variants': forms['variants']})
@@ -144,6 +144,7 @@ def buildForm(resource={}):
 
 
 def processForm(uri, data, olddata):
+    new = queryManager.ask(uri) # is this a new entry?
     # create a dictionary object of term uris and their form data
     #TODO: is there a good way to move all term matching to a single configurable location?
     terms={
@@ -156,6 +157,7 @@ def processForm(uri, data, olddata):
         ns['skos']['altLabel']: [],
         ns['skos']['hiddenLabel']: [],
         }
+
     # find all alt and hidden labels
     for label in data['var']:
         try:
@@ -165,37 +167,42 @@ def processForm(uri, data, olddata):
                 rterms[ns['skos']['altLabel']].append(label['variant'])
         except:
             continue
-
+        
+    if new == False:
     #TODO: make delete make sense. This is a huge mess of trial and error.
-    delete = "DELETE DATA {" 
-    try:
-        for alt in olddata[str(ns['skos']['altLabel'])]:
-            delete += "<%(uri)s> <http://www.w3.org/2004/02/skos/core#altLabel> '%(alt)s' . " % {'uri': uri, 'alt': alt['value']}
-    except:
-        pass
-    try:
-        for hidden in olddata[str(ns['skos']['hiddenLabel'])]:
-            delete += "<%(uri)s> <http://www.w3.org/2004/02/skos/core#hiddenLabel> '%(hid)s' . " % {'uri': uri, 'hid': hidden['value']}
-    except:
-        pass
+        delete = "DELETE DATA {" 
+        try:
+            for alt in olddata[str(ns['skos']['altLabel'])]:
+                delete += "<%(uri)s> <http://www.w3.org/2004/02/skos/core#altLabel> '%(alt)s' . " % {'uri': uri, 'alt': alt['value']}
+        except:
+            pass
+        try:
+            for hidden in olddata[str(ns['skos']['hiddenLabel'])]:
+                delete += "<%(uri)s> <http://www.w3.org/2004/02/skos/core#hiddenLabel> '%(hid)s' . " % {'uri': uri, 'hid': hidden['value']}
+        except:
+            pass
+        
+        try:
+            for pref in olddata[str(ns['skos']['prefLabel'])]:
+                delete += "<%(uri)s> <http://www.w3.org/2004/02/skos/core#prefLabel> '%(alt)s' . " % {'uri': uri, 'alt': pref['value']}
+                delete += "<%(uri)s> <http://www.w3.org/2004/02/skos/core#label> '%(alt)s' . " % {'uri': uri, 'alt': pref['value']}
+        except:
+            pass
+        try:
+            for first in olddata[str(ns['foaf']['givenName'])]:
+                delete += "<%(uri)s> <http://xmlns.com/foaf/0.1/givenName> '%(alt)s' . " % {'uri': uri, 'alt': first['value']}
+        except:
+            pass
+        try:
+            for last in olddata[str(ns['foaf']['familyName'])]:
+                delete += "<%(uri)s> <http://xmlns.com/foaf/0.1/familyName> '%(alt)s' . " % {'uri': uri, 'alt': last['value']}
+        except:
+            pass
+        delete += '}'
 
-    try:
-        for pref in olddata[str(ns['skos']['prefLabel'])]:
-            delete += "<%(uri)s> <http://www.w3.org/2004/02/skos/core#prefLabel> '%(alt)s' . " % {'uri': uri, 'alt': pref['value']}
-            delete += "<%(uri)s> <http://www.w3.org/2004/02/skos/core#label> '%(alt)s' . " % {'uri': uri, 'alt': pref['value']}
-    except:
-        pass
-    try:
-        for first in olddata[str(ns['foaf']['givenName'])]:
-            delete += "<%(uri)s> <http://xmlns.com/foaf/0.1/givenName> '%(alt)s' . " % {'uri': uri, 'alt': first['value']}
-    except:
-        pass
-    try:
-        for last in olddata[str(ns['foaf']['familyName'])]:
-            delete += "<%(uri)s> <http://xmlns.com/foaf/0.1/familyName> '%(alt)s' . " % {'uri': uri, 'alt': last['value']}
-    except:
-        pass
-    delete += '}'
+        delStatus = queryManager.update(delete)
+    else: 
+        delStatus = True
 
     # Insert Updated data
     update =  '{'
@@ -207,10 +214,12 @@ def processForm(uri, data, olddata):
         for value in rterms[term]:
             if value:
                 update += '<' + uri + '> <' + str(term) + '> "' + str(value)+ '" . '
+    if new == True:
+        update += '<' + uri + '> <' + ns['rdf']['type']+ '> "' + ns['mads']['RWO'] + '" . '
+        update += '<' + uri + '> <' + ns['rdf']['type']+ '> "' + ns['foaf']['person'] + '" . '
     update += ' }'
 
     #TODO: what happens on failure? If delete succeeds and insert fails? Does DELETE/INSERT fix this.
-    delStatus = queryManager.update(delete)
     upStatus = queryManager.insert(update)
 
     return delStatus and upStatus
